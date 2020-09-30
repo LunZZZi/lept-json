@@ -83,6 +83,8 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
     return LEPT_PARSE_OK;
 }
 
+char escapeChars[] = "bfnrt\"\\/";
+char realChars[] = "\b\f\n\r\t\"\\/";
 static int lept_parse_string(lept_context* c, lept_value* v) {
     size_t head = c->top, len;
     const char* p;
@@ -99,6 +101,19 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
             case '\0':
                 c->top = head;
                 return LEPT_PARSE_MISS_QUOTATION_MARK;
+            case '\\':
+                int i;
+                for (i = 0; i < 8; i++) {
+                    if (escapeChars[i] == *p) {
+                        PUTC(c, realChars[i]);
+                        p++;
+                        break;
+                    }
+                }
+                if (i == 8) {
+                    PUTC(c, ch);
+                }
+                break;
             default:
                 PUTC(c, ch);
         }
