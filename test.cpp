@@ -134,7 +134,7 @@ static void test_parse() {
     test_parse_invalid_value();
     test_parse_root_not_singular();
     test_parse_number();
-    #if 0
+    #if 1
     test_parse_invalid_number();
     #endif
 }

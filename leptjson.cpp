@@ -30,9 +30,22 @@ static int lept_parse_literal(lept_context* c, lept_value* v, const char *str, l
     return LEPT_PARSE_OK;
 }
 
+#define ISDIGIT(ch)         ((ch) >= '0' && (ch) <= '9')
+#define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
+
 static int lept_parse_number(lept_context* c, lept_value* v) {
     char* end;
-    /* \TODO validate number */
+    /*  validate number */
+    const char* ch = c->json;
+    if (!ISDIGIT(*ch) && *ch != '-') 
+        return LEPT_PARSE_INVALID_VALUE;
+    ch++;
+    while (ISDIGIT1TO9(*ch) || *ch == '.') {
+        ch++;
+    }
+    if (*(ch - 1) == '.')
+        return LEPT_PARSE_INVALID_VALUE;
+
     v->n = strtod(c->json, &end);
     if (c->json == end)
         return LEPT_PARSE_INVALID_VALUE;
