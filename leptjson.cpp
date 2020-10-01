@@ -15,6 +15,9 @@ namespace leptjson {
 #define EXPECT(c, ch)       do { assert(*c->json == (ch)); c->json++; } while(0)
 #define ISDIGIT(ch)         ((ch) >= '0' && (ch) <= '9')
 #define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
+#define ISATOFLOW(ch)       ((ch) >= 'a' && (ch) <= 'f')
+#define ISATOFHIGH(ch)      ((ch) >= 'A' && (ch) <= 'F')
+#define ISHEX(ch)           (ISDIGIT(ch) || ISATOFLOW(ch) || ISATOFHIGH(ch))
 #define PUTC(c, ch) do { *(char*)lept_context_push(c, sizeof(char)) = (ch); } while(0)
 
 typedef struct {
@@ -83,13 +86,46 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
     return LEPT_PARSE_OK;
 }
 
+/**
+ * parse unicode hex4
+ * @param p pointer to next character
+ * @param u codepoint
+ * @return pointer to next character or NULL
+ **/
 static const char* lept_parse_hex4(const char* p, unsigned* u) {
-    /* \TODO */
+    for (int i = 0; i < 4; i++) {
+        if (!ISHEX(*p))
+            return NULL;
+        unsigned d = *p - '0';
+        *u <<= 4;
+        *u |= d;
+        p++;
+    }
     return p;
 }
 
 static void lept_encode_utf8(lept_context* c, unsigned u) {
-    /* \TODO */
+    if (u >= 0x0000 && u <= 0x007F) {
+        PUTC(c, u);
+    }
+
+    if (u >= 0x0080 && u <= 0x07FF) {
+        PUTC(c, 0xC0 | ((u >>  6) & 0xFF)); /* 0xC0 = 11000000 */
+        PUTC(c, 0x80 | ( u        & 0x3F)); /* 0x3F = 00011111 */
+    }
+
+    if (u >= 0x0800 && u <= 0xFFFF) {
+        PUTC(c, 0xE0 | ((u >> 12) & 0xFF)); /* 0xE0 = 11100000 */
+        PUTC(c, 0x80 | ((u >>  6) & 0x3F)); /* 0x80 = 10000000 */
+        PUTC(c, 0x80 | ( u        & 0x3F)); /* 0x3F = 00111111 */
+    }
+
+    if (u >= 0x10000 && u <= 0x10FFFF) {
+        PUTC(c, 0xF0 | ((u >> 18) & 0xFF)); /* 0xF0 = 11110000 */
+        PUTC(c, 0x80 | ((u >> 12) & 0x3F)); /* 0xE0 = 11100000 */
+        PUTC(c, 0x80 | ((u >>  6) & 0x3F)); /* 0x80 = 10000000 */
+        PUTC(c, 0x80 | ( u        & 0x3F)); /* 0x3F = 00111111 */
+    }
 }
 
 #define STRING_ERROR(ret) do { c->top = head; return ret; } while(0)
@@ -126,7 +162,7 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
                     case 'u':
                         if (!(p = lept_parse_hex4(p, &u)))
                             STRING_ERROR(LEPT_PARSE_INVALID_UNICODE_HEX);
-                        /* \TODO surrogate handling */
+                        /* surrogate handling */
                         lept_encode_utf8(c, u);
                         break;
                     default:
