@@ -29,24 +29,24 @@ static int test_pass = 0;
 #define TEST_NUMBER(expect, json)\
     do {\
         lept_value v;\
-        EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, json));\
-        EXPECT_EQ_INT(LEPT_NUMBER, lept_get_type(&v));\
-        EXPECT_EQ_DOUBLE(expect, lept_get_number(&v));\
+        EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse(json));\
+        EXPECT_EQ_INT(LEPT_NUMBER, v.lept_get_type());\
+        EXPECT_EQ_DOUBLE(expect, v.lept_get_number());\
     } while(0)
 
 #define TEST_BOOL(expect, json, type)\
     do {\
         lept_value v;\
-        EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, json));\
-        EXPECT_EQ_INT(type, lept_get_type(&v));\
-        EXPECT_EQ_BOOL(expect, lept_get_boolean(&v));\
+        EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse(json));\
+        EXPECT_EQ_INT(type, v.lept_get_type());\
+        EXPECT_EQ_BOOL(expect, v.lept_get_boolean());\
     } while(0)
 
 static void test_parse_null() {
     lept_value v;
-    v.type = LEPT_FALSE;
-    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "null"));
-    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+    v.lept_set_type(LEPT_FALSE);
+    EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse("null"));
+    EXPECT_EQ_INT(LEPT_NULL, v.lept_get_type());
 }
 
 static void test_parse_true() {
@@ -60,32 +60,33 @@ static void test_parse_false() {
 static void test_parse_expect_value() {
     lept_value v;
 
-    v.type = LEPT_FALSE;
-    EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, lept_parse(&v, ""));
-    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+    v.lept_set_type(LEPT_FALSE);
+    EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, v.lept_parse(""));
+    EXPECT_EQ_INT(LEPT_NULL, v.lept_get_type());
 
-    v.type = LEPT_FALSE;
-    EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, lept_parse(&v, " "));
-    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+    v.lept_set_type(LEPT_FALSE);
+    EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, v.lept_parse(" "));
+    EXPECT_EQ_INT(LEPT_NULL, v.lept_get_type());
 }
 
 static void test_parse_invalid_value() {
     lept_value v;
-    v.type = LEPT_FALSE;
-    EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, lept_parse(&v, "nul"));
-    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+    v.lept_set_type(LEPT_FALSE);
+    EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, v.lept_parse("nul"));
+    EXPECT_EQ_INT(LEPT_NULL, v.lept_get_type());
 
-    v.type = LEPT_FALSE;
-    EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, lept_parse(&v, "?"));
-    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+    v.lept_set_type(LEPT_FALSE);
+    v.lept_set_type(LEPT_FALSE);
+    EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, v.lept_parse("?"));
+    EXPECT_EQ_INT(LEPT_NULL, v.lept_get_type());
 }
 
 static void test_parse_root_not_singular() {
     lept_value v;
-    v.type = LEPT_FALSE;
-    EXPECT_EQ_INT(LEPT_PARSE_ROOT_NOT_SINGULAR, lept_parse(&v, "null x"));
-    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
-    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "null "));
+    v.lept_set_type(LEPT_FALSE);
+    EXPECT_EQ_INT(LEPT_PARSE_ROOT_NOT_SINGULAR, v.lept_parse("null x"));
+    EXPECT_EQ_INT(LEPT_NULL, v.lept_get_type());
+    EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse("null "));
 }
 
 static void test_parse_number() {
@@ -113,11 +114,10 @@ static void test_parse_number() {
 #define TEST_STRING(expect, json)\
     do {\
         lept_value v;\
-        lept_init(&v);\
-        EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, json));\
-        EXPECT_EQ_INT(LEPT_STRING, lept_get_type(&v));\
-        EXPECT_EQ_STRING(expect, lept_get_string(&v), lept_get_string_length(&v));\
-        lept_free(&v);\
+        EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse(json));\
+        EXPECT_EQ_INT(LEPT_STRING, v.lept_get_type());\
+        EXPECT_EQ_STRING(expect, v.lept_get_string(), v.lept_get_string_length());\
+        v.lept_free();\
     } while(0)
 
 static void test_parse_string() {
@@ -132,9 +132,9 @@ static void test_parse_string() {
 #define TEST_ERROR(error, json)\
     do {\
         lept_value v;\
-        v.type = LEPT_NULL;\
-        EXPECT_EQ_INT(error, lept_parse(&v, json));\
-        EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));\
+        v.lept_set_type(LEPT_NULL);\
+        EXPECT_EQ_INT(error, v.lept_parse(json));\
+        EXPECT_EQ_INT(LEPT_NULL, v.lept_get_type());\
     } while(0)
 
 static void test_parse_invalid_number() {

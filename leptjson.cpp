@@ -79,7 +79,7 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
     if (c->json == end)
         return LEPT_PARSE_INVALID_VALUE;
     c->json = end;
-    lept_set_number(v, n);
+    v->lept_set_number(n);
     return LEPT_PARSE_OK;
 }
 
@@ -97,7 +97,7 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
         switch (ch) {
             case '\"':
                 len = c->top - head;
-                lept_set_string(v, (const char*)lept_context_pop(c, len), len);
+                v->lept_set_string((const char*)lept_context_pop(c, len), len);
                 c->json = p;
                 return LEPT_PARSE_OK;
             case '\0':
@@ -134,15 +134,15 @@ static int lept_parse_value(lept_context* c, lept_value* v) {
     }
 }
 
-int lept_parse(lept_value* v, const char* json) {
+int lept_value::lept_parse(const char* json) {
     lept_context c;
-    assert(v != NULL);
+    // assert(v != NULL);
     c.json = json;
     c.stack = NULL;        /* <- */
     c.size = c.top = 0;    /* <- */
-    v->type = LEPT_NULL;
+    this->type = LEPT_NULL;
     lept_parse_whitespace(&c);
-    int result = lept_parse_value(&c, v);
+    int result = lept_parse_value(&c, this);
 
     if (result == LEPT_PARSE_OK) {
         lept_parse_whitespace(&c);
@@ -155,62 +155,53 @@ int lept_parse(lept_value* v, const char* json) {
     return result;
 }
 
-lept_type lept_get_type(const lept_value* v) {
-    assert(v != NULL);
-    return v->type;
+lept_type lept_value::lept_get_type() {
+    return type;
 }
 
-double lept_get_number(lept_value* v) {
-    assert(v != NULL && v->type == LEPT_NUMBER);
-    return v->u.n;
+void lept_value::lept_free() {
+    if (this->type == LEPT_STRING)
+        free(this->u.s.s);
+    this->type = LEPT_NULL;
 }
 
-void lept_free(lept_value* v) {
-    assert(v != NULL);
-    if (v->type == LEPT_STRING)
-        free(v->u.s.s);
-    v->type = LEPT_NULL;
+int lept_value::lept_get_boolean() {
+    assert((this->type == LEPT_TRUE || this->type == LEPT_FALSE));
+    return this->type == LEPT_TRUE ? true : false;
 }
 
-int lept_get_boolean(const lept_value* v) {
-    assert(v != NULL && (v->type == LEPT_TRUE || v->type == LEPT_FALSE));
-    return v->type == LEPT_TRUE ? true : false;
+void lept_value::lept_set_boolean(int b) {
+    this->type = b > 0 ? LEPT_TRUE : LEPT_FALSE;
 }
 
-void lept_set_boolean(lept_value* v, int b) {
-    assert(v != NULL);
-    v->type = b > 0 ? LEPT_TRUE : LEPT_FALSE;
+double lept_value::lept_get_number() {
+    assert(this->type == LEPT_NUMBER);
+    return this->u.n;
 }
 
-double lept_get_number(const lept_value* v) {
-    assert(v != NULL && v->type == LEPT_NUMBER);
-    return v->u.n;
+void lept_value::lept_set_number(double n) {
+    this->u.n = n;
+    this->type = LEPT_NUMBER;
 }
 
-void lept_set_number(lept_value* v, double n) {
-    assert(v != NULL);
-    v->u.n = n;
-    v->type = LEPT_NUMBER;
+const char* lept_value::lept_get_string() {
+    assert(this->type == LEPT_STRING);
+    return this->u.s.s;
 }
 
-const char* lept_get_string(const lept_value* v) {
-    assert(v != NULL && v->type == LEPT_STRING);
-    return v->u.s.s;
+size_t lept_value::lept_get_string_length() {
+    assert(this->type == LEPT_STRING);
+    return this->u.s.len;
 }
 
-size_t lept_get_string_length(const lept_value* v) {
-    assert(v != NULL && v->type == LEPT_STRING);
-    return v->u.s.len;
-}
-
-void lept_set_string(lept_value* v, const char* s, size_t len) {
-    assert(v != NULL && (s != NULL || len == 0));
-    lept_free(v);
-    v->u.s.s = (char*)malloc(len + 1);
-    memcpy(v->u.s.s, s, len);
-    v->u.s.s[len] = '\0';
-    v->u.s.len = len;
-    v->type = LEPT_STRING;
+void lept_value::lept_set_string(const char* s, size_t len) {
+    assert((s != NULL || len == 0));
+    this->lept_free();
+    this->u.s.s = (char*)malloc(len + 1);
+    memcpy(this->u.s.s, s, len);
+    this->u.s.s[len] = '\0';
+    this->u.s.len = len;
+    this->type = LEPT_STRING;
 }
 
 }
