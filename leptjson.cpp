@@ -83,9 +83,19 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
     return LEPT_PARSE_OK;
 }
 
-char escapeChars[] = "bfnrt\"\\/";
-char realChars[] = "\b\f\n\r\t\"\\/";
+static const char* lept_parse_hex4(const char* p, unsigned* u) {
+    /* \TODO */
+    return p;
+}
+
+static void lept_encode_utf8(lept_context* c, unsigned u) {
+    /* \TODO */
+}
+
+#define STRING_ERROR(ret) do { c->top = head; return ret; } while(0)
+
 static int lept_parse_string(lept_context* c, lept_value* v) {
+    unsigned u;
     size_t head = c->top, len;
     const char* p;
     EXPECT(c, '\"');
@@ -104,16 +114,23 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
                 c->top = head;
                 return LEPT_PARSE_MISS_QUOTATION_MARK;
             case '\\':
-                int i;
-                for (i = 0; i < 8; i++) {
-                    if (escapeChars[i] == *p) {
-                        PUTC(c, realChars[i]);
-                        p++;
+                switch (*p++) {
+                    case '\"': PUTC(c, '\"'); break;
+                    case '\\': PUTC(c, '\\'); break;
+                    case '/':  PUTC(c, '/' ); break;
+                    case 'b':  PUTC(c, '\b'); break;
+                    case 'f':  PUTC(c, '\f'); break;
+                    case 'n':  PUTC(c, '\n'); break;
+                    case 'r':  PUTC(c, '\r'); break;
+                    case 't':  PUTC(c, '\t'); break;
+                    case 'u':
+                        if (!(p = lept_parse_hex4(p, &u)))
+                            STRING_ERROR(LEPT_PARSE_INVALID_UNICODE_HEX);
+                        /* \TODO surrogate handling */
+                        lept_encode_utf8(c, u);
                         break;
-                    }
-                }
-                if (i == 8) {
-                    return LEPT_PARSE_INVALID_STRING_ESCAPE;
+                    default:
+                        STRING_ERROR(LEPT_PARSE_INVALID_STRING_ESCAPE);
                 }
                 break;
             default:
