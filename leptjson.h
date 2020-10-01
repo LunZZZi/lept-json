@@ -20,7 +20,8 @@ enum {
     LEPT_PARSE_INVALID_STRING_ESCAPE,
     LEPT_PARSE_INVALID_STRING_CHAR,
     LEPT_PARSE_INVALID_UNICODE_HEX,
-    LEPT_PARSE_INVALID_UNICODE_SURROGATE
+    LEPT_PARSE_INVALID_UNICODE_SURROGATE,
+    LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET
 };
 
 class lept_value {
@@ -44,9 +45,14 @@ public:
 
     const char* lept_get_string();
     size_t lept_get_string_length();
-    void lept_set_string(const char* s, size_t len); 
-private:
+    void lept_set_string(const char* s, size_t len);
+
+    size_t lept_get_array_size();
+    lept_value* lept_get_array_element(size_t index);
+
+public:
     union {
+        struct { lept_value* e; size_t size; } a; /* array */
         struct { char* s; size_t len; } s;  /* string */
         double n;                          /* number */
     } u;
