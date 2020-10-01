@@ -187,6 +187,44 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
     }
 }
 
+static int lept_parse_value(lept_context* c, lept_value* v);
+
+static int lept_parse_array(lept_context* c, lept_value* v) {
+    size_t size = 0;
+    int ret;
+    EXPECT(c, '[');
+    lept_parse_whitespace(c);
+    if (*c->json == ']') {
+        c->json++;
+        v->type = LEPT_ARRAY;
+        v->u.a.size = 0;
+        v->u.a.e = NULL;
+        return LEPT_PARSE_OK;
+    }
+    for (;;) {
+        lept_value e;
+
+        lept_parse_whitespace(c);
+        if ((ret = lept_parse_value(c, &e)) != LEPT_PARSE_OK)
+            return ret;
+        memcpy(lept_context_push(c, sizeof(lept_value)), &e, sizeof(lept_value));
+        size++;
+        if (*c->json == ',')
+            c->json++;
+        else if (*c->json == ']') {
+            c->json++;
+            v->type = LEPT_ARRAY;
+            v->u.a.size = size;
+            size *= sizeof(lept_value);
+            memcpy(v->u.a.e = (lept_value*)malloc(size), lept_context_pop(c, size), size);
+            return LEPT_PARSE_OK;
+        }
+        else
+            return LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET;
+    }
+}
+
+
 static int lept_parse_value(lept_context* c, lept_value* v) {
     // check length
     switch (*c->json) {
@@ -195,6 +233,7 @@ static int lept_parse_value(lept_context* c, lept_value* v) {
         case 'f':  return lept_parse_literal(c, v, "false", LEPT_FALSE);
         case '"':  return lept_parse_string(c, v);
         case '\0': return LEPT_PARSE_EXPECT_VALUE;
+        case '[':  return lept_parse_array(c, v);
         default:   return lept_parse_number(c, v);
     }
 }
@@ -267,6 +306,17 @@ void lept_value::lept_set_string(const char* s, size_t len) {
     this->u.s.s[len] = '\0';
     this->u.s.len = len;
     this->type = LEPT_STRING;
+}
+
+size_t lept_value::lept_get_array_size() {
+    assert(this->type == LEPT_ARRAY);
+    return this->u.a.size;
+}
+
+lept_value* lept_value::lept_get_array_element(size_t index) {
+    assert(this->type == LEPT_ARRAY);
+    assert(index < this->u.a.size);
+    return &this->u.a.e[index];
 }
 
 }

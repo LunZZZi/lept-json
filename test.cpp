@@ -189,6 +189,21 @@ static void test_parse_invalid_unicode_surrogate() {
     TEST_ERROR(LEPT_PARSE_INVALID_UNICODE_SURROGATE, "\"\\uD800\\uE000\"");
 }
 
+#if defined(_MSC_VER)
+#define EXPECT_EQ_SIZE_T(expect, actual) EXPECT_EQ_BASE((expect) == (actual), (size_t)expect, (size_t)actual, "%Iu")
+#else
+#define EXPECT_EQ_SIZE_T(expect, actual) EXPECT_EQ_BASE((expect) == (actual), (size_t)expect, (size_t)actual, "%zu")
+#endif
+
+static void test_parse_array() {
+    lept_value v;
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse("[ ]"));
+    EXPECT_EQ_INT(LEPT_ARRAY, v.lept_get_type());
+    EXPECT_EQ_SIZE_T(0, v.lept_get_array_size());
+    v.lept_free();
+}
+
 static void test_parse() {
     test_parse_null();
     test_parse_true();
@@ -203,6 +218,7 @@ static void test_parse() {
     test_parse_invalid_string_char();
     test_parse_invalid_unicode_hex();
     test_parse_invalid_unicode_surrogate();
+    test_parse_array();
 }
 
 int main() {
