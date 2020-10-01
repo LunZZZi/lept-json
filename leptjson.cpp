@@ -92,6 +92,8 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
     p = c->json;
     for (;;) {
         char ch = *p++;
+        if ('\x01' <= ch && ch <= '\x1F')
+            return LEPT_PARSE_INVALID_STRING_CHAR;
         switch (ch) {
             case '\"':
                 len = c->top - head;
@@ -111,7 +113,7 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
                     }
                 }
                 if (i == 8) {
-                    PUTC(c, ch);
+                    return LEPT_PARSE_INVALID_STRING_ESCAPE;
                 }
                 break;
             default:
