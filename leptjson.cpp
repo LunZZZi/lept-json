@@ -205,8 +205,13 @@ static int lept_parse_array(lept_context* c, lept_value* v) {
         lept_value e;
 
         lept_parse_whitespace(c);
-        if ((ret = lept_parse_value(c, &e)) != LEPT_PARSE_OK)
+        if ((ret = lept_parse_value(c, &e)) != LEPT_PARSE_OK) {
+            for (size_t i = 0; i < size; i++) {
+                lept_value* value = (lept_value*)(lept_context_pop(c, sizeof(lept_value)));
+                value->lept_free();
+            }
             return ret;
+        }
         memcpy(lept_context_push(c, sizeof(lept_value)), &e, sizeof(lept_value));
         size++;
 
@@ -266,8 +271,15 @@ lept_type lept_value::lept_get_type() {
 }
 
 void lept_value::lept_free() {
-    if (this->type == LEPT_STRING)
+    if (this->type == LEPT_STRING) {
         free(this->u.s.s);
+    }
+    if (this->type == LEPT_ARRAY) {
+        for (size_t i = 0; i < this->u.a.size; i++) {
+            this->u.a.e[i].lept_free();
+        }
+        free(this->u.a.e);
+    }
     this->type = LEPT_NULL;
 }
 
