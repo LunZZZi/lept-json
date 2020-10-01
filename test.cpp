@@ -150,6 +150,22 @@ static void test_parse_invalid_number() {
     TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "nan");
 }
 
+static void test_parse_invalid_string_escape() {
+#if 1
+    TEST_ERROR(LEPT_PARSE_INVALID_STRING_ESCAPE, "\"\\v\"");
+    TEST_ERROR(LEPT_PARSE_INVALID_STRING_ESCAPE, "\"\\'\"");
+    TEST_ERROR(LEPT_PARSE_INVALID_STRING_ESCAPE, "\"\\0\"");
+    TEST_ERROR(LEPT_PARSE_INVALID_STRING_ESCAPE, "\"\\x12\"");
+#endif
+}
+
+static void test_parse_invalid_string_char() {
+#if 1
+    TEST_ERROR(LEPT_PARSE_INVALID_STRING_CHAR, "\"\x01\"");
+    TEST_ERROR(LEPT_PARSE_INVALID_STRING_CHAR, "\"\x1F\"");
+#endif
+}
+
 static void test_parse() {
     test_parse_null();
     test_parse_true();
@@ -158,10 +174,10 @@ static void test_parse() {
     test_parse_invalid_value();
     test_parse_root_not_singular();
     test_parse_number();
-    #if 1
     test_parse_invalid_number();
-    #endif
     test_parse_string();
+    test_parse_invalid_string_escape();
+    test_parse_invalid_string_char();
 }
 
 int main() {
