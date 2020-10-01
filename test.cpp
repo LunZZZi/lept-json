@@ -25,6 +25,7 @@ static int test_pass = 0;
 #define EXPECT_EQ_BOOL(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
 #define EXPECT_EQ_STRING(expect, actual, alength) \
     EXPECT_EQ_BASE(sizeof(expect) - 1 == alength && memcmp(expect, actual, alength) == 0, expect, actual, "%s")
+#define EXPECT_EQ_UL(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%u")
 
 #define TEST_NUMBER(expect, json)\
     do {\
@@ -204,6 +205,37 @@ static void test_parse_array() {
     v.lept_free();
 }
 
+static void test_parse_array2() {
+    lept_value v;
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse("[ true   , false, 123  , null , \"abc\" ]"));
+    EXPECT_EQ_INT(LEPT_ARRAY, v.lept_get_type());
+    EXPECT_EQ_SIZE_T(5, v.lept_get_array_size());
+    EXPECT_EQ_INT(LEPT_TRUE, v.lept_get_array_element(0)->lept_get_type()); 
+    EXPECT_EQ_INT(LEPT_FALSE, v.lept_get_array_element(1)->lept_get_type()); 
+    EXPECT_EQ_INT(LEPT_NUMBER, v.lept_get_array_element(2)->lept_get_type()); 
+    EXPECT_EQ_INT(LEPT_NULL, v.lept_get_array_element(3)->lept_get_type()); 
+    EXPECT_EQ_INT(LEPT_STRING, v.lept_get_array_element(4)->lept_get_type()); 
+    v.lept_free();
+}
+
+static void test_parse_array3() {
+    lept_value v;
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
+    EXPECT_EQ_INT(LEPT_ARRAY, v.lept_get_type());
+    EXPECT_EQ_SIZE_T(4, v.lept_get_array_size());
+    EXPECT_EQ_INT(LEPT_ARRAY, v.lept_get_array_element(0)->lept_get_type()); 
+    EXPECT_EQ_INT(LEPT_ARRAY, v.lept_get_array_element(1)->lept_get_type()); 
+    EXPECT_EQ_INT(LEPT_ARRAY, v.lept_get_array_element(2)->lept_get_type()); 
+    EXPECT_EQ_INT(LEPT_ARRAY, v.lept_get_array_element(3)->lept_get_type()); 
+    EXPECT_EQ_UL(0U, v.lept_get_array_element(0)->lept_get_array_size()); 
+    EXPECT_EQ_UL(1U, v.lept_get_array_element(1)->lept_get_array_size()); 
+    EXPECT_EQ_UL(2U, v.lept_get_array_element(2)->lept_get_array_size()); 
+    EXPECT_EQ_UL(3U, v.lept_get_array_element(3)->lept_get_array_size()); 
+    v.lept_free();
+}
+
 static void test_parse() {
     test_parse_null();
     test_parse_true();
@@ -219,6 +251,8 @@ static void test_parse() {
     test_parse_invalid_unicode_hex();
     test_parse_invalid_unicode_surrogate();
     test_parse_array();
+    test_parse_array2();
+    test_parse_array3();
 }
 
 int main() {
