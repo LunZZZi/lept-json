@@ -131,7 +131,7 @@ static void lept_encode_utf8(lept_context* c, unsigned u) {
 #define STRING_ERROR(ret) do { c->top = head; return ret; } while(0)
 
 static int lept_parse_string(lept_context* c, lept_value* v) {
-    unsigned u;
+    unsigned u, u2;
     size_t head = c->top, len;
     const char* p;
     EXPECT(c, '\"');
@@ -163,6 +163,18 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
                         if (!(p = lept_parse_hex4(p, &u)))
                             STRING_ERROR(LEPT_PARSE_INVALID_UNICODE_HEX);
                         /* surrogate handling */
+                        if (*(p + 1) != '\\' || *(p + 2) != 'u')
+                           STRING_ERROR(LEPT_PARSE_INVALID_UNICODE_SURROGATE); 
+                        p += 2;
+                        if (u >= 0xD800 && u <= 0xDBFF) {
+                            if (!(p = lept_parse_hex4(p, &u2)))
+                                STRING_ERROR(LEPT_PARSE_INVALID_UNICODE_SURROGATE);
+                            if (!(u2 >= 0xDC00 && u2 <= 0xDFFF))
+                               STRING_ERROR(LEPT_PARSE_INVALID_UNICODE_SURROGATE); 
+                            int high = u;
+                            int low = u2;
+                            u = 0x10000 + (high - 0xD800) * 0x400 + (low - 0xDC00);
+                        }
                         lept_encode_utf8(c, u);
                         break;
                     default:
