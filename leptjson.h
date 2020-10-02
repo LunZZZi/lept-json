@@ -24,6 +24,8 @@ enum {
     LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET
 };
 
+struct lept_member;
+
 class lept_value {
 public:
     lept_value(): type(LEPT_NULL) {}
@@ -50,14 +52,25 @@ public:
     size_t lept_get_array_size();
     lept_value* lept_get_array_element(size_t index);
 
+    // size_t lept_get_object_size();
+    // const char* lept_get_object_key(size_t index);
+    // size_t lept_get_object_key_length(size_t index);
+    // lept_value* lept_get_object_value(size_t index);
+
 public:
     union {
+        struct { lept_member* m; size_t size; }o ;
         struct { lept_value* e; size_t size; } a; /* array */
         struct { char* s; size_t len; } s;  /* string */
         double n;                          /* number */
     } u;
 public:
     lept_type type;
+};
+
+struct lept_member {
+    char* k; size_t klen;   /* member key string, key string length */
+    lept_value v;           /* member value */
 };
 
 }
