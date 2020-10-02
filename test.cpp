@@ -161,6 +161,17 @@ static void test_parse_object() {
     v.lept_free();
 }
 
+static void test_parse_object2() {
+    lept_value v;
+    EXPECT_EQ_INT(LEPT_PARSE_OK, v.lept_parse(" { \"a\": { \"a\": { \"a\": 1 } } } "));
+    EXPECT_EQ_INT(LEPT_OBJECT, v.lept_get_type());
+    EXPECT_EQ_SIZE_T(1, v.lept_get_object_size());
+    EXPECT_EQ_STRING("a", v.lept_get_object_key(0), 1);
+    EXPECT_EQ_STRING("a", v.lept_get_object_value(0)->lept_get_object_key(0), 1);
+    EXPECT_EQ_STRING("a", v.lept_get_object_value(0)->lept_get_object_value(0)->lept_get_object_key(0), 1);
+    v.lept_free();
+}
+
 static void test_parse_root_not_singular() {
     lept_value v;
     v.lept_set_type(LEPT_FALSE);
@@ -356,7 +367,8 @@ static void test_parse() {
     test_parse_array2();
     test_parse_array3();
     test_parse_object();
-#if 0
+    test_parse_object2();
+#if 1
     test_parse_miss_colon();
     test_parse_miss_key();
     test_parse_miss_comma_or_curly_bracket();
