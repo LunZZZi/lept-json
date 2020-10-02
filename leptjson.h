@@ -21,7 +21,10 @@ enum {
     LEPT_PARSE_INVALID_STRING_CHAR,
     LEPT_PARSE_INVALID_UNICODE_HEX,
     LEPT_PARSE_INVALID_UNICODE_SURROGATE,
-    LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET
+    LEPT_PARSE_MISS_COMMA_OR_SQUARE_BRACKET,
+    LEPT_PARSE_MISS_KEY,
+    LEPT_PARSE_MISS_COLON,
+    LEPT_PARSE_MISS_COMMA_OR_CURLY_BRACKET
 };
 
 struct lept_member;
@@ -52,14 +55,14 @@ public:
     size_t lept_get_array_size();
     lept_value* lept_get_array_element(size_t index);
 
-    // size_t lept_get_object_size();
-    // const char* lept_get_object_key(size_t index);
-    // size_t lept_get_object_key_length(size_t index);
-    // lept_value* lept_get_object_value(size_t index);
+    size_t lept_get_object_size();
+    const char* lept_get_object_key(size_t index);
+    size_t lept_get_object_key_length(size_t index);
+    lept_value* lept_get_object_value(size_t index);
 
 public:
     union {
-        struct { lept_member* m; size_t size; }o ;
+        struct { lept_member* m; size_t size; } o ;
         struct { lept_value* e; size_t size; } a; /* array */
         struct { char* s; size_t len; } s;  /* string */
         double n;                          /* number */
