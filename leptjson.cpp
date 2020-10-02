@@ -260,7 +260,7 @@ static int lept_parse_object(lept_context* c, lept_value* v) {
     for (;;) {
         /* parse key to m.k, m.klen */
         char* str;
-        if (lept_parse_string_raw(c, &str, &m.klen) != LEPT_PARSE_OK) {
+        if (*c->json != '\"' || lept_parse_string_raw(c, &str, &m.klen) != LEPT_PARSE_OK) {
             ret = LEPT_PARSE_MISS_KEY;
             break;
         }
@@ -301,6 +301,11 @@ static int lept_parse_object(lept_context* c, lept_value* v) {
         lept_parse_whitespace(c);
     }
     /* Pop and free members on the stack */
+    for (size_t i = 0; i < size; i++) {
+        lept_member* m = (lept_member*)(lept_context_pop(c, sizeof(lept_member)));
+        free(m->k);
+        m->v.lept_free();
+    }
     return ret;
 }
 
@@ -352,6 +357,13 @@ void lept_value::lept_free() {
             this->u.a.e[i].lept_free();
         }
         free(this->u.a.e);
+    }
+    if (this->type == LEPT_OBJECT) {
+        for (size_t i = 0; i < this->u.o.size; i++) {
+            free(this->u.o.m[i].k);
+            this->u.o.m[i].v.lept_free();
+        }
+        free(this->u.o.m);
     }
     this->type = LEPT_NULL;
 }
